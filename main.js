@@ -23,9 +23,9 @@ function emailValidation() {
   if (isValidEmail(email.value)) {
     isValidForm = true;
   } else if (email.value.trim() === '') {
-    setError(email, 1, "Email can't be a blank..");
+    setError(email, "Email can't be a blank..");
   } else {
-    setError(email, 1, 'please enter a vaild email..');
+    setError(email, 'please enter a vaild email..');
   }
 }
 function usernameValidation() {
@@ -33,22 +33,27 @@ function usernameValidation() {
   if (regex.test(username.value)) {
     isValidForm = true;
   } else {
-    setError(username, 0, 'Please enter a valid username..');
+    setError(username, 'Please enter a valid username..');
   }
 }
 function passwordValidation() {
   if (password.value.length < 8) {
-    setError(password, 2, 'Password must be at least 8 characters');
+    setError(password, 'Password must be at least 8 characters');
   } else if (password.value !== confirmPassword.value) {
-    setError(confirmPassword, 3, "password didn't match...");
+    setError(confirmPassword, "password didn't match...");
   } else {
     isValidForm = true;
   }
 }
-function setError(input, idx, mesg) {
+function setError(input, mesg) {
+  console.log(input);
   isValidForm = false;
   input.style.border = '2px solid red';
-  errorDivs[idx].textContent = mesg;
+
+  if (input.id === 'username') errorDivs[0].textContent = mesg;
+  if (input.id === 'email') errorDivs[1].textContent = mesg;
+  if (input.id === 'password') errorDivs[2].textContent = mesg;
+  if (input.id === 'ConfirmPassword') errorDivs[3].textContent = mesg;
 }
 function submitHandler(e) {
   e.preventDefault();
@@ -64,24 +69,52 @@ function submitHandler(e) {
       username: username.value,
       email: email.value,
       password: password.value,
+      password_confirmation: confirmPassword.value,
     };
     // send Post Request
     fetch('https://goldblv.com/api/hiring/tasks/register', {
       method: 'POST',
-      body: JSON.stringify(formData),
       headers: {
-        'content-Type': 'application/json',
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
-    }).then(() => {
-      // successfully Signed up, then navigate to home page and store user data in local storage
-      localStorage.setItem(
-        'userData',
-        JSON.stringify({ username: username.value, email: email.value })
-      );
-      window.location = './home.html';
-    });
+      body: JSON.stringify(formData),
+    })
+      .then((res) => {
+        // Check response.ok
+        if (res.ok) {
+          return res.json();
+        }
+        // reject if not OK, instead of throw an error
+        return Promise.reject(res);
+      })
+      .then((data) => {
+        // successfully Signed up, then navigate to home page and store user data in local storage
+        localStorage.setItem('userData', JSON.stringify(data));
+        window.location = './home.html';
+      })
+      .catch((res) => {
+        console.log(res.status, res.statusText);
+        // get error message, if any
+        res.json().then(({ errors }) => serverErrorHandler(errors));
+      });
   }
 }
+function serverErrorHandler(errors) {
+  [0, 1, 2, 3].forEach((itm) => (errorDivs[itm].textContent = ''));
 
+  let keys = Object.keys(errors);
+  keys.forEach((key) => {
+    // Select error input
+    let input = id(key);
+    setError(input, errors[key][0]);
+    input.style.border = '2px solid red';
+
+    let allInputs = document.querySelectorAll('input');
+    for (let i = 0; i < allInputs.length; i++) {
+      allInputs[i].style.border = '2px solid green';
+    }
+  });
+}
 // Events
 form.addEventListener('submit', (e) => submitHandler(e));
