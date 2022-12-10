@@ -29,7 +29,7 @@ function emailValidation() {
   }
 }
 function usernameValidation() {
-  var regex = /^[a-zA-Z0-9]{5,15}$/;
+  var regex = /[a-zA-Z0-9]{5,15}$/;
   if (regex.test(username.value)) {
     isValidForm = true;
   } else {
@@ -46,7 +46,6 @@ function passwordValidation() {
   }
 }
 function setError(input, mesg) {
-  console.log(input);
   isValidForm = false;
   input.style.border = '2px solid red';
 
