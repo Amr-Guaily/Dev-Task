@@ -7,60 +7,75 @@ let username = id('username'),
   confirmPassword = id('confirmPassword');
 
 let form = document.querySelector('form');
+let submitBtn = document.querySelector(".register-btn");
 let errorDivs = document.getElementsByClassName('error'),
   success = document.querySelector('.success');
 
-// Global Variables
-let isValidForm = true;
-
 // Functions
-function isValidEmail(email) {
+function emailValidation(email) {
   return email.match(
     /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
   );
 }
-function emailValidation() {
-  if (isValidEmail(email.value)) {
-    isValidForm = true;
+function emailHandler() {
+  if (emailValidation(email.value)) {
+    setSucess(email, 1);
+    return true;
   } else if (email.value.trim() === '') {
     setError(email, "Email can't be a blank..");
   } else {
     setError(email, 'please enter a vaild email..');
   }
 }
-function usernameValidation() {
-  var regex = /[a-zA-Z0-9]{5,15}$/;
+
+function usernameHandler() {
+  var regex = /^[a-z][a-zA-Z0-9]{5,15}[a-z]$/;
   if (regex.test(username.value)) {
-    isValidForm = true;
+    setSucess(username, 0);
+    return true;
   } else {
-    setError(username, 'Please enter a valid username..');
+    setError(username, 'The userName must consist (5-15) characters, only letters and numbers are allowed, No number at the begining or the end');
   }
 }
-function passwordValidation() {
+
+function passwordHandler() {
   if (password.value.length < 8) {
     setError(password, 'Password must be at least 8 characters');
   } else if (password.value !== confirmPassword.value) {
     setError(confirmPassword, "password didn't match...");
+    setSucess(password, 2);
   } else {
-    isValidForm = true;
+    setSucess(confirmPassword, 3);
+    return true;
   }
 }
+
+function setSucess(input, idx) {
+  input.style.border = '2px solid green';
+  errorDivs[idx].textContent = '';
+}
 function setError(input, mesg) {
-  isValidForm = false;
   input.style.border = '2px solid red';
 
   if (input.id === 'username') errorDivs[0].textContent = mesg;
   if (input.id === 'email') errorDivs[1].textContent = mesg;
   if (input.id === 'password') errorDivs[2].textContent = mesg;
-  if (input.id === 'ConfirmPassword') errorDivs[3].textContent = mesg;
+  if (input.id === 'confirmPassword') errorDivs[3].textContent = mesg;
 }
+
+function validationHandler() {
+  let isValidEmail = emailHandler(),
+    isValidName = usernameHandler(),
+    isValidPassword = passwordHandler();
+
+  if (isValidName && isValidEmail && isValidPassword) return true;
+}
+
 function submitHandler(e) {
   e.preventDefault();
 
-  // Form Validation
-  usernameValidation();
-  emailValidation();
-  passwordValidation();
+  // Check if form is valid or not before send the request
+  const isValidForm = validationHandler();
 
   // If validation passed successfully, then collect form data and send post req to an API
   if (isValidForm) {
@@ -100,19 +115,11 @@ function submitHandler(e) {
   }
 }
 function serverErrorHandler(errors) {
-  [0, 1, 2, 3].forEach((itm) => (errorDivs[itm].textContent = ''));
-
   let keys = Object.keys(errors);
   keys.forEach((key) => {
     // Select error input
     let input = id(key);
     setError(input, errors[key][0]);
-    input.style.border = '2px solid red';
-
-    let allInputs = document.querySelectorAll('input');
-    for (let i = 0; i < allInputs.length; i++) {
-      allInputs[i].style.border = '2px solid green';
-    }
   });
 }
 // Events
